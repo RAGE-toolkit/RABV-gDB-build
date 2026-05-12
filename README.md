@@ -1,4 +1,4 @@
-
+#### (scripts and repo under development, any bugs, please report)
 # RABV-gDB-build
 
 `RABV-gDB-build` contains the RABV-specific files required to run the V-gTK workflow and build a rabies virus genomic database. This repository is intended to work together with V-gTK by providing the reference files, configuration files, curation files, test data, and build script needed to generate a local RABV SQLite database.
