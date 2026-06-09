@@ -398,4 +398,4 @@ KX148266	reference
 KX148267	reference
 KX148268	reference
 KX148269	reference
-NC_001542	reference
+NC_001542	master
