@@ -1,0 +1,6 @@
+accession	category	start	end	gene_name	symbol
+NC_001542	CDS	71	1423	Nucleoprotein	N
+NC_001542	CDS	1514	2407	Phosphoprotein	P
+NC_001542	CDS	2496	3104	Matrix protein	M
+NC_001542	CDS	3318	4892	Glycoprotein	G
+NC_001542	CDS 5418	11846	Large structural protein	L

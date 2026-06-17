@@ -1,2 +1,3 @@
-chromosome	segment_number	tree_type	tree_name	tree_model
-1	1	reference	ref_tree_am3c_am5.treefile	TVM+F+R5
+chromosome	segment_number	tree_type	tree_name	tree_model	description
+1	1	reference	ref.treefile	TVM+F+R5	Reference tree covering the global diversity of Rabies lyssavirus, including representative sequences from major and minor RABV clades/lineages. 
+1	1	reference_with_outgroups	ref_plus_outgroup.treefile	TVM+F+R5	Reference tree covering global RABV diversity with three lyssavirus outgroups, EBLV-1, EBLV-2 and LBV, included to support rooting and phylogenetic interpretation.
