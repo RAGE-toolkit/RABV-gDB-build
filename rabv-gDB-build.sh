@@ -1,11 +1,12 @@
 # parameters
 TAX_ID=${1:-11292} # RABV
+email="sandeep.kolya@gmail.com"
 
 scripts_dir="$(dirname "$0")/scripts"
 generic_dir="$(dirname "$0")/generic/rabv"
-db_name="rabv-jul0425"
+db_name="rabv-gDB_16062026" #DDMMYY
 
-db_file="./../../rabv-vgtk/V-gTK/tmp/SqliteDB/rabv-gDB_Dec022025.db"      # set this if updating an existing db, e.g. "rabv-gDB_Dec022025.db"
+db_file=""      # set this if updating an existing db, e.g. "rabv-gDB_Dec022025.db"
 is_update=0    # 1 for update and 0 for not update
 
 skip_fill=${2:-true}  # Use this variable to control skipping AddMissingData.py
@@ -14,7 +15,7 @@ master_acc="NC_001542"
 
 #generic file paths
 exclusion_list="${generic_dir}/exclusion_list.txt"
-ref_list="${generic_dir}/ref_list_based_on_blast.txt"
+ref_list="${generic_dir}/ref_list.txt"
 
 # steps to run, O to skip any step
 run_genbank_fetcher=0
@@ -30,18 +31,19 @@ run_calc_alignment_cord=0
 run_software_version=0
 run_generate_tables=0
 run_host_taxa=0
-run_clade_assignment=1
-run_create_db=1
+run_clade_assignment=0
+run_create_sqlite_db=1
+run_validate_db=1
 
 # ----- Run GenBankFetcher -----#
 if [ "$run_genbank_fetcher" -eq 1 ]; then
-  gb_args=( "--taxid" "$TAX_ID" )
+  gb_args=( "--taxid" "$TAX_ID" "--email" "$email")
   if [ "$is_update" -eq 1 ]; then
     if [ -z "$db_file" ]; then
       echo "Error: is_update=1 but db_file is empty. Set db_file to an existing .db file."
       exit 1
     fi
-    gb_args+=( "--update" "--db" "$db_file" )
+    gb_args+=( "--update" "--db" "$db_file" "$email" )
   fi
 
   python "${scripts_dir}/GenBankFetcher.py" "${gb_args[@]}"
@@ -165,6 +167,66 @@ else
   echo ""
 fi
 # ----- End of 21483707 Curator.py -----
+
+# ----- Curator.py  curation from SK -----
+if [ "${run_curator:-0}" -eq 1 ]; then
+
+  # gb_matrix path depends on mode
+  if [ "$is_update" -eq 1 ]; then
+    cur_gb_matrix="tmp/Update/GenBank-matrix/gB_matrix_raw.tsv"
+  else
+    cur_gb_matrix="tmp/GenBank-matrix/gB_matrix_raw.tsv"
+  fi
+
+  cur_curated_file="generic/rabv/curation/sk-host_curation_Apr022026.tsv"
+
+  cur_args=(
+    "--gb_matrix"    "$cur_gb_matrix"
+    "--curated_file" "$cur_curated_file"
+  )
+
+  python "${scripts_dir}/Curator.py" "${cur_args[@]}"
+  if [ $? -ne 0 ]; then
+    echo "Error: Curator.py failed."
+    exit 1
+  fi
+  echo "Curator.py completed successfully."
+  echo ""
+else
+  echo "Skipping Curator.py"
+  echo ""
+fi
+# ----- End of SK Curator.py -----
+
+# ----- Curator.py  curation from KB -----
+if [ "${run_curator:-0}" -eq 1 ]; then
+
+  # gb_matrix path depends on mode
+  if [ "$is_update" -eq 1 ]; then
+    cur_gb_matrix="tmp/Update/GenBank-matrix/gB_matrix_raw.tsv"
+  else
+    cur_gb_matrix="tmp/GenBank-matrix/gB_matrix_raw.tsv"
+  fi
+
+  cur_curated_file="generic/rabv/curation/kb-host_curation_Apr092026.tsv"
+
+  cur_args=(
+    "--gb_matrix"    "$cur_gb_matrix"
+    "--curated_file" "$cur_curated_file"
+  )
+
+  python "${scripts_dir}/Curator.py" "${cur_args[@]}"
+  if [ $? -ne 0 ]; then
+    echo "Error: Curator.py failed."
+    exit 1
+  fi
+  echo "Curator.py completed successfully."
+  echo ""
+else
+  echo "Skipping Curator.py"
+  echo ""
+fi
+# ----- End of KB Curator.py -----
 
 # ----- Run ValidateMatrix.py -----
 if [ "$run_validate_matrix" -eq 1 ]; then
@@ -405,12 +467,13 @@ fi
 
 # ----- GenerateTables.py (normal vs update mode) -----
 if [ "$run_generate_tables" -eq 1 ]; then
-  gt_genbank_matrix="tmp/Update/GenBank-matrix/gB_matrix_raw.tsv"
-  gt_blast_hits="tmp/Update/Blast/query_uniq_tophits.tsv"
-  gt_nextalign_dir="tmp/Update/Nextalign/"
-  gt_paded_aln="tmp/Update/Pad-alignment/alUnc509RefseqsMafftHandModified.fa"
 
   if [ "$is_update" -eq 1 ]; then
+    gt_genbank_matrix="tmp/Update/GenBank-matrix/gB_matrix_raw.tsv"
+    gt_blast_hits="tmp/Update/Blast/query_uniq_tophits.tsv"
+    gt_nextalign_dir="tmp/Update/Nextalign/"
+    gt_paded_aln="tmp/Update/Pad-alignment/alUnc509RefseqsMafftHandModified.fa"
+
     gt_args=(
       "--genbank_matrix" "$gt_genbank_matrix"
       "--blast_hits"     "$gt_blast_hits"
@@ -418,9 +481,23 @@ if [ "$run_generate_tables" -eq 1 ]; then
       "--paded_aln"      "$gt_paded_aln"
       "--update"
     )
+
     python "${scripts_dir}/GenerateTables.py" "${gt_args[@]}"
+
   else
-    python "${scripts_dir}/GenerateTables.py"
+    gt_genbank_matrix="tmp/GenBank-matrix/gB_matrix_raw.tsv"
+    gt_blast_hits="tmp/Blast/query_uniq_tophits.tsv"
+    gt_nextalign_dir="tmp/Nextalign/"
+    gt_paded_aln="tmp/Pad-alignment/alUnc509RefseqsMafftHandModified.fa"
+
+    gt_args=(
+      "--genbank_matrix" "$gt_genbank_matrix"
+      "--blast_hits"     "$gt_blast_hits"
+      "--nextalign_dir"  "$gt_nextalign_dir"
+      "--paded_aln"      "$gt_paded_aln"
+    )
+
+    python "${scripts_dir}/GenerateTables.py" "${gt_args[@]}"
   fi
 
   if [ $? -ne 0 ]; then
@@ -511,3 +588,97 @@ else
   echo ""
 fi
 # ----- End CladeAssignment.py -----
+
+# ----- CreateSqliteDB.py (normal vs update mode) -----
+
+if [ "$run_create_sqlite_db" -eq 1 ]; then
+
+  # ---------- Normal-mode inputs ----------
+  norm_meta_data="tmp/GenBank-matrix/gB_matrix_raw.tsv"
+  norm_features="tmp/Tables/features.tsv"
+  norm_pad_aln="tmp/Tables/sequence_alignment.tsv"
+  norm_fasta_sequences="tmp/GenBank-matrix/sequences.fa"
+  norm_host_taxa_file="tmp/HostTaxa/Host_taxa.tsv"
+  norm_host_taxa_lineage_file="tmp/HostTaxa/Host_taxa_lineage.tsv"
+  norm_host_taxa_children_file="tmp/HostTaxa/Host_taxa_children.tsv"
+  norm_host_taxa_lineage_lookup_file="tmp/HostTaxa/Host_taxa_lineage_lookup.tsv"
+
+  # ---------- Update-mode inputs ----------
+  upd_meta_data="tmp/Update/GenBank-matrix/gB_matrix_raw.tsv"
+  upd_features="tmp/Update/Tables/features.tsv"
+  upd_pad_aln="tmp/Update/Tables/sequence_alignment.tsv"
+  upd_fasta_sequences="tmp/Update/GenBank-matrix/sequences.fa"
+  upd_host_taxa_file="tmp/Update/HostTaxa/Host_taxa.tsv"
+  upd_host_taxa_lineage_file="tmp/Update/HostTaxa/Host_taxa_lineage.tsv"
+  upd_host_taxa_children_file="tmp/Update/HostTaxa/Host_taxa_children.tsv"
+  upd_host_taxa_lineage_lookup_file="tmp/Update/HostTaxa/Host_taxa_lineage_lookup.tsv"
+  upd_software_version_file="tmp/Update/Software_info/software_info.tsv"
+  tree_dir="generic/rabv/tree/"
+  
+  create_db_args=()
+
+  if [ "$is_update" -eq 1 ]; then
+    # Update mode (as per your example)
+    create_db_args+=(
+      "--meta_data"        "$upd_meta_data"
+      "--db_name"          "$db_name"
+      "--db_file"          "$db_file"
+      "--features"         "$upd_features"
+      "--pad_aln"          "$upd_pad_aln"
+      "--fasta_sequences"  "$upd_fasta_sequences"
+      "--host_taxa_file"   "$upd_host_taxa_file"
+      "--host_lineage_file" "$upd_host_taxa_lineage_file"
+      "--host_children_file" "$upd_host_taxa_children_file"
+      "--host_lineage_lookup_file" "$upd_host_taxa_lineage_lookup_file"
+      "--base_dir"          "tmp/Update"
+      "--proj_settings"     "$upd_software_version_file"
+      "--tree_dir"           "$tree_dir"
+      "--update"
+    )
+  else
+    # Normal mode
+    create_db_args+=(
+      "--meta_data"        "$norm_meta_data"
+      "--features"         "$norm_features"
+      "--pad_aln"          "$norm_pad_aln"
+      "--fasta_sequences"  "$norm_fasta_sequences"
+      "--host_taxa_file"   "$norm_host_taxa_file"
+      "--tree_dir"          "$tree_dir"
+    )
+  fi
+
+  python "${scripts_dir}/CreateSqliteDB.py"   "--db_name" "$db_name" "--tree_dir"  "$tree_dir" "${create_db_args[@]}" 
+  if [ $? -ne 0 ]; then
+    echo "Error: CreateSqliteDB.py failed."
+    exit 1
+  fi
+
+  echo "CreateSqliteDB.py completed successfully."
+  echo ""
+else
+  echo "Skipping CreateSqliteDB.py"
+  echo ""
+fi
+
+# ----- End CreateSqliteDB.py -----
+
+
+# ----- ValidateDB.py -----
+if [ "$run_validate_db" -eq 1 ]; then
+  validate_db_file="tmp/SqliteDB/${db_name}.db"
+
+  python "${scripts_dir}/ValidateDB.py" --db "$validate_db_file"
+
+  if [ $? -ne 0 ]; then
+    echo "Error: ValidateDB.py failed."
+    exit 1
+  fi
+
+  echo "ValidateDB.py completed successfully."
+  echo ""
+else
+  echo "Skipping ValidateDB.py"
+  echo ""
+fi
+
+# -----End ValidateDB.py -----
