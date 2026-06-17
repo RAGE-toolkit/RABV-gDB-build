@@ -18,20 +18,20 @@ exclusion_list="${generic_dir}/exclusion_list.txt"
 ref_list="${generic_dir}/ref_list.txt"
 
 # steps to run, O to skip any step
-run_genbank_fetcher=0
-run_genbank_parser=0
-run_download_gff=0
-run_curator=0
-run_validate_matrix=0
-run_filter_extract=0
-run_blast_alignment=0
-run_nextalign=0
-run_pad_alignment=0
-run_calc_alignment_cord=0
-run_software_version=0
-run_generate_tables=0
-run_host_taxa=0
-run_clade_assignment=0
+run_genbank_fetcher=1
+run_genbank_parser=1
+run_download_gff=1
+run_curator=1
+run_validate_matrix=1
+run_filter_extract=1
+run_blast_alignment=1
+run_nextalign=1
+run_pad_alignment=1
+run_calc_alignment_cord=1
+run_software_version=1
+run_generate_tables=1
+run_host_taxa=1
+run_clade_assignment=1
 run_create_sqlite_db=1
 run_validate_db=1
 
